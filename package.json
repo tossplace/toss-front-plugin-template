@@ -1,0 +1,19 @@
+{
+  "name": "toss-front-plugin-template",
+  "version": "0.0.0",
+  "description": "토스플레이스 프론트엔드 플러그인 템플릿입니다.",
+  "main": "index.js",
+  "scripts": {
+    "zip": "zip -r front-plugin-js.zip front-plugin-js",
+    "deploy": "ts-node deploy/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@aws-sdk/client-s3": "^3.928.0",
+    "@types/node": "^24.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
