@@ -30,7 +30,7 @@
 ```
 
 
-## 4. 시작하기
+## 3. 시작하기
 
 문서를 참고해주세요 ([🔗 Toss FRONT 플러그인 개발 가이드](https://docs.tossplace.com/guide/front-integration/getting-started.html)).
 
