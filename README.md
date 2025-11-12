@@ -15,6 +15,21 @@
 |:----------------------|:-----------|:---------------------------------------|
 | **`front-plugin-js`** | Javascript | 프론트 플러그인의 기본 기능이 예시로 구현되어있는 자바스크립트 템플릿 |
 
+예제 코드는 다음과 같은 파일들로 구성되어 있습니다:
+
+### 2-1. front-plugin-js
+
+```
+.
+├─ global.css    # 전역 스타일
+├─ index.html    # 진입점
+├─ home.html     # 대기 화면
+├─ onboarding.html # 온보딩 화면
+├─ order.html    # 주문 내역 화면
+└─ sdk.js        # SDK 유틸리티
+```
+
+
 ## 3. 시작하기
 
 문서를 참고해주세요 ([🔗 Toss FRONT 플러그인 개발 가이드](https://docs.tossplace.com/guide/front-integration/getting-started.html)).
