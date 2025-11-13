@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "zip": "zip -r front-plugin-js.zip front-plugin-js",
-    "deploy": "ts-node deploy/index.ts"
+    "deploy": "npm exec ts-node deploy/index.ts"
   },
   "keywords": [],
   "author": "",
