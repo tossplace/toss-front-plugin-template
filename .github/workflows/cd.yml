@@ -17,13 +17,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
-
-      - name: Install pnpm
-        run: npm install -g pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm install --frozen-lockfile
 
       - name: Set environment variables
         env:
@@ -35,11 +31,11 @@ jobs:
           echo "TOSSPLACE_BUCKET=${TOSSPLACE_BUCKET}"
 
       - name: Zip build
-        run: pnpm zip
+        run: npm run zip
 
       - name: Deploy to S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           TOSSPLACE_BUCKET: ${{ secrets.TOSSPLACE_BUCKET }}
-        run: pnpm run deploy
+        run: npm run deploy
