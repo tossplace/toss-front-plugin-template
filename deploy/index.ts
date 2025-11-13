@@ -22,6 +22,7 @@ export async function deploy() {
       const fileName = `versions/${timestamp}-${file.name}`;
       await uploadZip(filePath, fileName);
       metadata[file.name] = `/front-plugins/${fileName}`;
+      console.log(`${fileName} 파일 업로드 완료`)
     }
   }
   await uploadMetadata(metadata);
