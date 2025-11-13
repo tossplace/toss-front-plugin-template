@@ -19,7 +19,7 @@ export async function deploy() {
     if (file.isFile() && file.name.endsWith(".zip")) {
       const filePath = path.join(root, file.name);
       const timestamp = Date.now();
-      let fileName = `versions/${timestamp}-${file.name}`;
+      const fileName = `versions/${timestamp}-${file.name}`;
       await uploadZip(filePath, fileName);
       metadata[file.name] = `/front-plugins/${fileName}`;
     }
