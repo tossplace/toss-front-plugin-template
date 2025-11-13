@@ -1,2 +1,5 @@
 /.idea/
 .DS_Store
+/pnpm-lock.yaml
+*.zip
+/node_modules/
