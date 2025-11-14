@@ -22,7 +22,7 @@ export async function deploy() {
       const key = `front-plugins/versions/${timestamp}-${file.name}`
       await uploadZip(filePath, key);
       metadata[file.name.replace(".zip", "")] = key;
-      console.log(`${key} 파일 업로드 완료`)
+      console.log(`${JSON.stringify(metadata)} 파일 업로드 완료`)
     }
   }
   await uploadMetadata(metadata);
