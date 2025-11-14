@@ -19,10 +19,10 @@ export async function deploy() {
     if (file.isFile() && file.name.endsWith(".zip")) {
       const filePath = path.join(root, file.name);
       const timestamp = Date.now();
-      const fileName = `versions/${timestamp}-${file.name}`;
-      await uploadZip(filePath, fileName);
-      metadata[file.name] = `/front-plugins/${fileName}`;
-      console.log(`${fileName} 파일 업로드 완료`)
+      const key = `front-plugins/versions/${timestamp}-${file.name}`
+      await uploadZip(filePath, key);
+      metadata[file.name.replace(".zip", "")] = key;
+      console.log(`${key} 파일 업로드 완료`)
     }
   }
   await uploadMetadata(metadata);
@@ -39,10 +39,10 @@ async function uploadMetadata(metadata: any) {
   await s3.send(command);
 }
 
-async function uploadZip(filePath: string, fileName: string) {
+async function uploadZip(filePath: string, key: string) {
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
-    Key: `front-plugins/${fileName}`,
+    Key: key,
     Body: fs.createReadStream(filePath),
     ContentType: "application/zip",
   });
