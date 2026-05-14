@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://static.toss.im/tds/43.9.4/css/tds.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://static.toss.im/tps/main.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://static.toss.im/tps/others.css"
+    />
+    <link rel="stylesheet" type="text/css" href="./global.css" />
+    <script src="https://cdn.tossplace.com/toss-front-sdk/v1/index.js"></script>
+    <script src="./sdk.js"></script>
+    <title>Order Example - Toss Front SDK</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      const onIdle = () => {
+        sdk.template.renderIdlePage();
+      };
+      
+      // ===== 로그 유틸리티 =====
+      function log(message) {
+        // 로그 전송
+      }
+
+      // ===== 1. Serial Port 초기화 (멀티패드) =====
+      function initSerialPort() {
+        try {
+          sdk.serial.open({ baudRate: 115200, intercept: true });
+          log("[Serial] Port opened (baudRate: 115200, intercept: true)");
+        } catch (error) {
+          log(`[Error] Serial Open: ${error}`);
+        }
+
+        let unlisten = null;
+        try {
+          const cb = (params) => {
+            log(`[Serial] >> ${JSON.stringify(params)}`);
+            sdk.van.write(params);
+            log(`[Serial] << ${JSON.stringify(params)}`);
+          };
+          unlisten = sdk.serial.listen(cb);
+          log("[Serial] Listener registered");
+        } catch (error) {
+          log(`[Error] Serial Listen: ${error}`);
+        }
+
+        window.addEventListener("beforeunload", () => {
+          sdk.serial.close();
+          unlisten?.();
+        });
+      }
+
+      // ===== 초기화 =====
+      function init() {
+        onIdle();
+        initSerialPort();
+      }
+
+      init();
+    </script>
+  </body>
+</html>
