@@ -25,47 +25,70 @@
   <body>
     <div id="app"></div>
     <script>
-      sdk.template.renderOnboardingPage({
-        title: "서비스 로그인 (예시)",
-        inputs: {
-          email: {
-            label: "이메일",
-            type: "text",
-            placeholder: "이메일을 입력해주세요",
-          },
-          password: {
-            label: "비밀번호",
-            type: "password",
-            placeholder: "비밀번호를 입력해주세요",
-          },
-        },
-        navbarButton: {
-          label: '설정',
-          onClick: () => {
-              sdk.app.openSetting();
-          },
-        },
-        onSubmit: async (values) => {
-          /**
-           * 유저 인증 예시 화면입니다.
-           * 서버 인증 구성에 따라 이메일 인증을 사용하실 수 도 있고, 기기/매장 인증을 사용하실 수 도 있습니다.
-           * 
-           **/
-          const { serialNumber } = await sdk.app.getSerialNumber();
-          const response = await fetch("https://example.com", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+      function renderOnboardingPage() {
+        sdk.template.renderOnboardingPage({
+          title: "서비스 로그인 (예시)",
+          inputs: {
+            email: {
+              label: "이메일",
+              type: "text",
+              placeholder: "이메일을 입력해주세요",
             },
-            body: JSON.stringify({ ...values, serialNumber }),
-          }).then((response) => response.json());
+            password: {
+              label: "비밀번호",
+              type: "password",
+              placeholder: "비밀번호를 입력해주세요",
+            },
+          },
+          navbarButton: {
+            label: '설정',
+            onClick: () => {
+                sdk.app.openSetting();
+            },
+          },
+          onSubmit: async (values) => {
+            /**
+             * 유저 인증 예시 화면입니다.
+             * 서버 인증 구성에 따라 이메일 인증을 사용하실 수 도 있고, 기기/매장 인증을 사용하실 수 도 있습니다.
+             * 
+             **/
+            const { serialNumber } = await sdk.app.getSerialNumber();
+            const response = await fetch("https://example.com", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ ...values, serialNumber }),
+            }).then((response) => response.json());
 
-          await sdk.storage.set({ key: "token", value: token });
-          location.href = "./home";
-        },
-      });
+            await sdk.storage.set({ key: "token", value: token });
+            location.href = "./home";
+          },
+        });
+      }
 
-      document.getElementsByName("serialNumber")[0].value = "1234";
+      async function checkToken() {
+        const useTokenAuthorization = true;
+
+        /**
+         * 초기 설정 예시입니다.
+         * 토큰 인증을 사용한다면 onboarding.html 에서 획득한 token 검증 로직을 수행하고,
+         * 토큰 인증을 사용하지 않는다면 바로 index.html으로 이동합니다.
+         **/
+        if (useTokenAuthorization) {
+          const { value: token } = await sdk.storage.get({ key: "token" });
+
+          if (token != null) {
+            location.href = "./index.html";
+          } else {
+            renderOnboardingPage();
+          }
+        } else {
+          location.href = "./index.html";
+        }        
+      }
+
+      checkToken();
     </script>
   </body>
 </html>
