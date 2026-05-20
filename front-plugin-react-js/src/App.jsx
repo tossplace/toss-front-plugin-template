@@ -1,8 +1,11 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import { IdleStep, OrderStep } from "./steps";
 import sdk from "./sdk";
 
 function App() {
-  useEffect(() => {
+  const [step, setStep] = useState("idle");
+
+  useEffect(function example() {
     (async () => {
       const { serialNumber } = await sdk.app.getSerialNumber();
       console.log("serialNumber >> ", serialNumber);
@@ -13,8 +16,25 @@ function App() {
   }, []);
 
   return (
-    <main>
-      <h2>프론트 React 템플릿 화면입니다</h2>
+    <main id="app">
+      {step === "idle" ? (
+        <IdleStep
+          onNext={() => {
+            setStep("order");
+          }}
+        />
+      ) : step === "order" ? (
+        <OrderStep
+          onPrev={() => {
+            setStep("idle");
+          }}
+          onNext={() => {
+            setStep("idle");
+          }}
+        />
+      ) : (
+        <h2>프론트 React 템플릿 화면입니다</h2>
+      )}
     </main>
   );
 }
