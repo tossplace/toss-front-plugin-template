@@ -29,6 +29,10 @@ export function OrderStep({ onPrev, onNext }) {
         onNext();
       },
     });
+
+    return () => {
+      sdk.template.unmountRendering();
+    };
   }, [onPrev, onNext]);
 
   return null;

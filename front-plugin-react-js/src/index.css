@@ -4,8 +4,16 @@ body {
   height: 640px;
 }
 
-#root {
+#root, #app {
   width: 100%;
   height: 100%;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#app:empty {
+  display: none;
+}
+
+body:has(#app:not(:empty)) #root {
+  display: none;
 }

@@ -10,6 +10,10 @@ export function IdleStep({ onNext }) {
         onClick: onNext,
       },
     });
+
+    return () => {
+      sdk.template.unmountRendering();
+    };
   }, [onNext]);
 
   return null;

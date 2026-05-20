@@ -16,7 +16,7 @@ function App() {
   }, []);
 
   return (
-    <main id="app">
+    <main>
       {step === "idle" ? (
         <IdleStep
           onNext={() => {
@@ -29,7 +29,7 @@ function App() {
             setStep("idle");
           }}
           onNext={() => {
-            setStep("idle");
+            setStep("custom");
           }}
         />
       ) : (
