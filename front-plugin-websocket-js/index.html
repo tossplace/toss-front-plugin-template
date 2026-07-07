@@ -26,7 +26,7 @@
     <div id="app"></div>
     <script>
       // ===== 상태 관리 =====
-      let currentServerId = null;
+      let websocketServer = null;
       let currentConnectionId = null;
 
       // ===== 로그 유틸리티 =====
@@ -37,102 +37,75 @@
         sdk.template.renderIdlePage();
       };
 
-      // ===== 2. WebSocket 서버 열기 =====
-      const openServer = async () => {
+      // ===== 1. 메시지 송신 =====
+      const sendMessage = async (connectionId, data) => {
         try {
-          const result = await sdk.websocket.open({
-            port: 9000,
-            path: "/",
-          });
-
-          log(`[WebSocket] Server opened: ${JSON.stringify(result)}`);
-          currentServerId = result.serverId;
-
-          return result.serverId;
-        } catch (error) {
-          log(`[Error] WebSocket Open: ${error}`);
-          throw error;
-        }
-      };
-
-      // ===== 3. WebSocket 서버 종료 =====
-      const closeServer = async (serverId) => {
-        try {
-          await sdk.websocket.close({ serverId });
-          log(`[WebSocket] Server closed: ${serverId}`);
-        } catch (error) {
-          log(`[Error] WebSocket Close: ${error}`);
-        }
-      };
-
-      // ===== 4. 특정 연결 종료 =====
-      const disconnectClient = async (serverId, connectionId) => {
-        try {
-          await sdk.websocket.disconnect({ serverId, connectionId });
-          log(`[WebSocket] Disconnected: ${connectionId}`);
-        } catch (error) {
-          log(`[Error] WebSocket Disconnect: ${error}`);
-        }
-      };
-
-      // ===== 5. 메시지 송신 =====
-      const sendMessage = async (serverId, connectionId, data) => {
-        try {
-          await sdk.websocket.send({
-            serverId,
+          await websocketServer.send(
             connectionId,
-            data: typeof data === "string" ? data : JSON.stringify(data),
-          });
+            typeof data === "string" ? data : JSON.stringify(data),
+          );
           log(`[WebSocket] << ${JSON.stringify(data)}`);
         } catch (error) {
           log(`[Error] WebSocket Send: ${error}`);
         }
       };
 
-      // ===== 6. WebSocket 이벤트 리스너 등록 =====
-      const setupListeners = (serverId) => {
-        log(`[WebSocket] Setting up listeners for serverId: ${serverId}`);
+      // ===== 2. 특정 연결 종료 =====
+      const disconnectClient = async (connectionId) => {
+        try {
+          await websocketServer.disconnect(connectionId);
+          log(`[WebSocket] Disconnected: ${connectionId}`);
+        } catch (error) {
+          log(`[Error] WebSocket Disconnect: ${error}`);
+        }
+      };
 
-        /** connection별 cleanup 함수 관리 */
-        const connectionCleanups = new Map();
+      // ===== 3. 메시지 수신 처리 =====
+      const handleMessage = (payload) => {
+        log(`[WebSocket] >> ${payload.data}`);
 
-        /**
-         * 특정 connection에 대한 리스너들을 등록하고 cleanup 함수를 반환
-         */
-        const setupConnectionListeners = (serverId, connectionId) => {
-          // 메시지 수신 (serverId + connectionId 필터링)
-          const unlistenMessage = sdk.websocket.listen.message(
-            (payload) => {
-              log(`[WebSocket] >> ${payload.data}`);
+        try {
+          const data = JSON.parse(payload.data);
 
-              try {
-                const data = JSON.parse(payload.data);
+          if (data.name === "ping") {
+            sendMessage(payload.connectionId, {
+              name: "pong",
+              data: data.data,
+            });
+          } else if (data.name === "updateOrder") {
+            sdk.template.renderOrderPage({
+              order: data.data,
+              onBack: () => {
+                onIdle();
+              },
+            });
+          } else if (data.name === "clear") {
+            onIdle();
+          }
+        } catch (error) {
+          log(`[Error] Message parse: ${error}`);
+        }
+      };
 
-                if (data.name === "ping") {
-                  sendMessage(payload.serverId, payload.connectionId, {
-                    name: "pong",
-                    data: data.data,
-                  });
-                } else if (data.name === "updateOrder") {
-                  sdk.template.renderOrderPage({
-                    order: data.data,
-                    onBack: () => {
-                      onIdle();
-                    },
-                  });
-                } else if (data.name === "clear") {
-                  onIdle();
-                }
-              } catch (error) {
-                log(`[Error] Message parse: ${error}`);
-              }
+      // ===== 4. WebSocket 서버 시작 =====
+      // start는 서버 열기와 connection별 이벤트 리스너 등록/정리를 한 번에 처리합니다.
+      const initWebsocketServer = async () => {
+        try {
+          websocketServer = await sdk.websocket.start({
+            port: 9000,
+            path: "/",
+
+            // 새로운 연결 수신
+            onConnection: (payload) => {
+              log(`[WebSocket] New connection: ${payload.connectionId}`);
+              currentConnectionId = payload.connectionId;
             },
-            { serverId, connectionId },
-          );
 
-          // 연결 종료 수신 (serverId + connectionId 필터링)
-          const unlistenDisconnection = sdk.websocket.listen.disconnection(
-            (payload) => {
+            // 메시지 수신
+            onMessage: handleMessage,
+
+            // 연결 종료 수신
+            onDisconnection: (payload) => {
               log(
                 `[WebSocket] Disconnected: ${payload.connectionId} (reason: ${payload.reason || "unknown"})`,
               );
@@ -141,71 +114,23 @@
               if (currentConnectionId === payload.connectionId) {
                 currentConnectionId = null;
               }
-
-              // 해당 connection의 리스너들 정리
-              const cleanup = connectionCleanups.get(payload.connectionId);
-              if (cleanup) {
-                cleanup();
-                connectionCleanups.delete(payload.connectionId);
-              }
             },
-            { serverId, connectionId },
-          );
 
-          // 오류 수신 (serverId + connectionId 필터링)
-          const unlistenError = sdk.websocket.listen.error(
-            (payload) => {
+            // 오류 수신
+            onError: (payload) => {
               log(`[WebSocket] Error: ${payload.message}`);
             },
-            { serverId, connectionId },
+          });
+
+          const { serverId, host, port, path } = websocketServer;
+          log(
+            `[WebSocket] Server started: ${JSON.stringify({ serverId, host, port, path })}`,
           );
 
-          return () => {
-            unlistenMessage();
-            unlistenDisconnection();
-            unlistenError();
-          };
-        };
-
-        // 새로운 연결 수신 (serverId만 필터링)
-        const unlistenConnection = sdk.websocket.listen.connection(
-          (payload) => {
-            const { connectionId } = payload;
-            log(`[WebSocket] New connection: ${connectionId}`);
-            currentConnectionId = connectionId;
-
-            // 해당 connection에 대한 리스너들 등록
-            const cleanup = setupConnectionListeners(serverId, connectionId);
-            connectionCleanups.set(connectionId, cleanup);
-          },
-          { serverId },
-        );
-
-        // 전체 cleanup 함수 반환
-        return () => {
-          // 모든 connection 리스너들 해제
-          connectionCleanups.forEach((cleanup) => {
-            cleanup();
-          });
-          connectionCleanups.clear();
-
-          // connection 리스너 해제
-          unlistenConnection();
-
-          log("[WebSocket] All listeners removed");
-        };
-      };
-
-      // ===== 8. WebSocket 서버 초기화 =====
-      const initWebsocketServer = async () => {
-        try {
-          const serverId = await openServer();
-          const cleanup = setupListeners(serverId);
-
+          // stop은 모든 리스너 해제와 서버 종료를 함께 수행합니다.
           window.addEventListener("beforeunload", () => {
             log("[Cleanup] Before unload...");
-            cleanup();
-            closeServer(serverId);
+            websocketServer.stop();
           });
         } catch (error) {
           log(`[Error] Init WebSocket: ${error}`);
